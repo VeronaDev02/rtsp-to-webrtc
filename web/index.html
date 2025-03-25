@@ -2,19 +2,51 @@
 <html>
 <head>
     <meta charset="UTF-8">
-    <title>RTSP para WebRTC</title>
+    <title>4x RTSP para WebRTC</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
-    <h1>RTSP para WebRTC</h1>
-    <div>
-        <label for="rtspUrl">URL RTSP:</label>
-        <input type="text" id="rtspUrl" placeholder="rtsp://exemplo:554/stream">
-        <button id="connect">Conectar</button>
+    <div class="container">
+        <div class="video-grid">
+            <div class="video-container">
+                <video id="remoteVideo1" autoplay playsinline controls muted></video>
+                <div class="video-overlay" id="status1">Desconectado</div>
+            </div>
+            <div class="video-container">
+                <video id="remoteVideo2" autoplay playsinline controls muted></video>
+                <div class="video-overlay" id="status2">Desconectado</div>
+            </div>
+            <div class="video-container">
+                <video id="remoteVideo3" autoplay playsinline controls muted></video>
+                <div class="video-overlay" id="status3">Desconectado</div>
+            </div>
+            <div class="video-container">
+                <video id="remoteVideo4" autoplay playsinline controls muted></video>
+                <div class="video-overlay" id="status4">Desconectado</div>
+            </div>
+        </div>
+        
+        <div class="input-section">
+            <div class="rtsp-input">
+                <input type="text" id="rtspUrl1" placeholder="RTSP URL 1">
+                <button onclick="connect(1)">Conectar 1</button>
+            </div>
+            <div class="rtsp-input">
+                <input type="text" id="rtspUrl2" placeholder="RTSP URL 2">
+                <button onclick="connect(2)">Conectar 2</button>
+            </div>
+            <div class="rtsp-input">
+                <input type="text" id="rtspUrl3" placeholder="RTSP URL 3">
+                <button onclick="connect(3)">Conectar 3</button>
+            </div>
+            <div class="rtsp-input">
+                <input type="text" id="rtspUrl4" placeholder="RTSP URL 4">
+                <button onclick="connect(4)">Conectar 4</button>
+            </div>
+        </div>
     </div>
-    <div id="status">Desconectado</div>
-    <video id="remoteVideo" autoplay playsinline controls></video>
     
-    <script src ="js/script.js"></script>
+    <script src="js/script.js"></script>
 </body>
 </html>

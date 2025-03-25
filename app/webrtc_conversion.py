@@ -83,16 +83,22 @@ class VideoStreamTrack(MediaStreamTrack):
             self.frame_grabber.stop()
 
 class WebRTCConversion:
-    def __init__(self):
+    def __init__(self, reuse_connection=True):
         self.pc = None
         self.rtsp_connection = None
         self.video_track = None
+        self.reuse_connection = reuse_connection  # Nova flag para reutilização
 
     async def connect(self, rtsp_url):
         from rtsp_connection import RTSPConnection
         
-        self.rtsp_connection = RTSPConnection(rtsp_url)
-        self.rtsp_connection.connect()
+        # Se reutilização estiver habilitada, preserva a conexão RTSP
+        if not self.rtsp_connection or not self.reuse_connection:
+            if self.rtsp_connection:
+                self.rtsp_connection.close()
+            
+            self.rtsp_connection = RTSPConnection(rtsp_url)
+            self.rtsp_connection.connect()
         
         # Criação do peer connection
         self.pc = RTCPeerConnection()

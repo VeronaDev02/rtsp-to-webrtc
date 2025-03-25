@@ -3,12 +3,14 @@ import json
 import logging
 import websockets
 from aiortc import RTCSessionDescription
+from typing import Dict
+from webrtc_conversion import WebRTCConversion
 
 class WebSocketServer:
     def __init__(self, port):
         self.port = port
-        self.webrtc_conversion = None
         self.active_connections = set()
+        self.webrtc_conversions: Dict[str, WebRTCConversion] = {}
         
     async def register(self, websocket):
         self.active_connections.add(websocket)
@@ -16,7 +18,21 @@ class WebSocketServer:
     async def unregister(self, websocket):
         self.active_connections.remove(websocket)
         
-    # Corrigindo a assinatura do método para versão atual do websockets
+    async def cleanup_conversion(self, rtsp_url):
+        """Remove a conversão WebRTC quando não estiver mais em uso"""
+        if rtsp_url in self.webrtc_conversions:
+            conversion = self.webrtc_conversions[rtsp_url]
+            await conversion.close()
+            del self.webrtc_conversions[rtsp_url]
+        
+    async def get_or_create_webrtc_conversion(self, rtsp_url):
+        """Obtém uma conversão existente ou cria uma nova"""
+        if rtsp_url not in self.webrtc_conversions:
+            conversion = WebRTCConversion()
+            await conversion.connect(rtsp_url)
+            self.webrtc_conversions[rtsp_url] = conversion
+        return self.webrtc_conversions[rtsp_url]
+
     async def websocket_handler(self, websocket):
         await self.register(websocket)
         try:
@@ -24,13 +40,11 @@ class WebSocketServer:
             rtsp_url = await websocket.recv()
             print(f"Recebida URL RTSP: {rtsp_url}")
             
-            # Instancia e conecta o WebRTC com RTSP
-            from webrtc_conversion import WebRTCConversion
-            self.webrtc_conversion = WebRTCConversion()
-            await self.webrtc_conversion.connect(rtsp_url)
+            # Obtém ou cria conversão WebRTC
+            webrtc_conversion = await self.get_or_create_webrtc_conversion(rtsp_url)
             
             # Cria oferta SDP
-            offer = await self.webrtc_conversion.create_offer()
+            offer = await webrtc_conversion.create_offer()
             
             # Envia oferta para o cliente
             print(f"Enviando oferta SDP para o cliente")
@@ -43,34 +57,31 @@ class WebSocketServer:
             answer = RTCSessionDescription(sdp=answer_dict["sdp"], type=answer_dict["type"])
             
             # Processa resposta
-            await self.webrtc_conversion.process_answer(answer)
+            await webrtc_conversion.process_answer(answer)
             
             # Mantém a conexão aberta
             while True:
                 try:
                     message = await websocket.recv()
                     if message == "CLOSE":
+                        await self.cleanup_conversion(rtsp_url)
                         break
                 except websockets.exceptions.ConnectionClosed:
+                    await self.cleanup_conversion(rtsp_url)
                     break
                     
         except Exception as e:
             print(f"Erro no handler WebSocket: {e}")
         finally:
-            if self.webrtc_conversion:
-                await self.webrtc_conversion.close()
             await self.unregister(websocket)
 
-    # Método compatível com versões mais recentes do websockets
     async def start_async(self):
         logging.basicConfig(level=logging.INFO)
         
-        # Versão mais recente do websockets já não passa o argumento 'path'
         async with websockets.serve(
             self.websocket_handler, 
-            "0.0.0.0",  # Ouve em todas as interfaces
+            "0.0.0.0",  
             self.port
         ):
             print(f"Servidor WebSocket iniciado em 0.0.0.0:{self.port}")
-            # Mantém o servidor rodando indefinidamente
-            await asyncio.Future()  # Aguarda indefinidamente
+            await asyncio.Future()
