@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>RTSP para WebRTC</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <h1>RTSP para WebRTC</h1>
+    <div>
+        <label for="rtspUrl">URL RTSP:</label>
+        <input type="text" id="rtspUrl" placeholder="rtsp://exemplo:554/stream">
+        <button id="connect">Conectar</button>
+    </div>
+    <div id="status">Desconectado</div>
+    <video id="remoteVideo" autoplay playsinline controls></video>
+    
+    <script src ="js/script.js"></script>
+</body>
+</html>
